@@ -9,6 +9,7 @@ func init() {
 	_ = activity.Register(&Activity{})
 }
 
+// Input input meta data
 type Input struct {
 	Message string `md:"message"` // The message to log
 }
@@ -30,7 +31,11 @@ func (i *Input) FromMap(values map[string]interface{}) error {
 	return nil
 }
 
-var activityMd = activity.ToMetadata(&Input{})
+type Output struct {
+	AvailableLimit int `md:"availableLimit"` // available limit
+}
+
+var activityMd = activity.ToMetadata(&Input{}, &Output{})
 
 // Activity is an GQLActivity
 // inputs : {message}
@@ -52,6 +57,12 @@ func (a *Activity) Eval(ctx activity.Context) (done bool, err error) {
 	msg := input.Message
 
 	ctx.Logger().Info(msg)
+
+	// set output
+	err = ctx.SetOutput("availableLimit", int(10))
+	if err != nil {
+		return false, err
+	}
 
 	return true, nil
 }

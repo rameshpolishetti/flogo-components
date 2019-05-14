@@ -12,5 +12,12 @@
         "value": "",
         "description": "The message to log"
       }
+    ],
+    "output": [
+      {
+        "name": "availableLimit",
+        "type": "int",
+        "description": "available limit"
+      }
     ]
   }
