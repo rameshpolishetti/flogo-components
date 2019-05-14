@@ -1,0 +1,16 @@
+{
+    "name": "flogo-gql",
+    "type": "flogo:activity",
+    "version": "0.1.0",
+    "title": "GraphQL",
+    "description": "Executes GraphQL query",
+    "homepage": "https://github.com/rameshpolishetti/flogo-components/tree/master/activity/gql",
+    "input":[
+      {
+        "name": "message",
+        "type": "string",
+        "value": "",
+        "description": "The message to log"
+      }
+    ]
+  }
