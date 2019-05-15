@@ -1,6 +1,8 @@
 package gql
 
 import (
+	"fmt"
+
 	"github.com/project-flogo/core/activity"
 	"github.com/project-flogo/core/data/coerce"
 )
@@ -11,19 +13,19 @@ func init() {
 
 // Input input meta data
 type Input struct {
-	Message string `md:"message"` // The message to log
+	Request string `md:"request"` // request string
 }
 
 func (i *Input) ToMap() map[string]interface{} {
 	return map[string]interface{}{
-		"message": i.Message,
+		"request": i.Request,
 	}
 }
 
 func (i *Input) FromMap(values map[string]interface{}) error {
 
 	var err error
-	i.Message, err = coerce.ToString(values["message"])
+	i.Request, err = coerce.ToString(values["request"])
 	if err != nil {
 		return err
 	}
@@ -32,7 +34,7 @@ func (i *Input) FromMap(values map[string]interface{}) error {
 }
 
 type Output struct {
-	AvailableLimit int `md:"availableLimit"` // available limit
+	QueryDepth int `md:"queryDepth"` // query depth
 }
 
 var activityMd = activity.ToMetadata(&Input{}, &Output{})
@@ -54,12 +56,12 @@ func (a *Activity) Eval(ctx activity.Context) (done bool, err error) {
 	input := &Input{}
 	ctx.GetInputObject(input)
 
-	msg := input.Message
+	msg := fmt.Sprintf("GraphQL request: %s \n type: Query \n query depth: 10", input.Request)
 
 	ctx.Logger().Info(msg)
 
 	// set output
-	err = ctx.SetOutput("availableLimit", int(10))
+	err = ctx.SetOutput("queryDepth", int(10))
 	if err != nil {
 		return false, err
 	}
