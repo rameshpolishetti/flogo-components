@@ -1,40 +1,16 @@
 package gql
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
+	graphql "github.com/graph-gophers/graphql-go"
 	"github.com/project-flogo/core/activity"
-	"github.com/project-flogo/core/data/coerce"
 )
 
 func init() {
 	_ = activity.Register(&Activity{})
-}
-
-// Input input meta data
-type Input struct {
-	Request string `md:"request"` // request string
-}
-
-func (i *Input) ToMap() map[string]interface{} {
-	return map[string]interface{}{
-		"request": i.Request,
-	}
-}
-
-func (i *Input) FromMap(values map[string]interface{}) error {
-
-	var err error
-	i.Request, err = coerce.ToString(values["request"])
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-type Output struct {
-	QueryDepth int `md:"queryDepth"` // query depth
 }
 
 var activityMd = activity.ToMetadata(&Input{}, &Output{})
@@ -52,16 +28,112 @@ func (a *Activity) Metadata() *activity.Metadata {
 
 // Eval implements api.Activity.Eval - TBD
 func (a *Activity) Eval(ctx activity.Context) (done bool, err error) {
-
+	fmt.Println("Evaluate graphQL policies")
+	// get inputs
 	input := &Input{}
 	ctx.GetInputObject(input)
+	fmt.Println("query: ", input.Query)
+	fmt.Println("schema file: ", input.SchemaFile)
 
-	msg := fmt.Sprintf("GraphQL request: %s \n type: Query \n query depth: 10", input.Request)
+	// check schema file is provided or not
+	if input.SchemaFile == "" {
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := "Schema file is required"
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
 
-	ctx.Logger().Info(msg)
+		return true, nil
+	}
+
+	// load schema
+	schemaStr, err := ioutil.ReadFile(input.SchemaFile)
+	if err != nil {
+		fmt.Printf("Not able to read the schema file[%s] with the error - %s \n", input.SchemaFile, err)
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := fmt.Sprintf("Not able to read the schema file[%s] with the error - %s \n", input.SchemaFile, err)
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
+	schema, err := graphql.ParseSchema(string(schemaStr), nil)
+	if err != nil {
+		fmt.Println("Error while parsing GQL schema: ", err)
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := fmt.Sprintf("Error while parsing GQL schema: %s", err)
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
+
+	// parse request
+	var gqlQuery struct {
+		Query         string                 `json:"query"`
+		OperationName string                 `json:"operationName"`
+		Variables     map[string]interface{} `json:"variables"`
+	}
+	err = json.Unmarshal([]byte(input.Query), &gqlQuery)
+	if err != nil {
+		fmt.Println("Error while parsing GQL query: ", err)
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := fmt.Sprintf("Not a valid graphQL request. Details: %s", err)
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
+
+	// validate request
+	validationErrors := schema.Validate(gqlQuery.Query)
+	if validationErrors != nil {
+		fmt.Printf("Invalid GQL request: %s \n", validationErrors)
+
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := fmt.Sprintf("Not a valid graphQL request. Details: %s", validationErrors)
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
 
 	// set output
-	err = ctx.SetOutput("queryDepth", int(10))
+	err = ctx.SetOutput("valid", true)
+	if err != nil {
+		return false, err
+	}
+	validationMsg := fmt.Sprintf("Valid graphQL query. query = %s\n type = Query", input.Query)
+	err = ctx.SetOutput("validationMessage", validationMsg)
 	if err != nil {
 		return false, err
 	}
