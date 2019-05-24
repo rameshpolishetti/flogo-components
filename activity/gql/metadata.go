@@ -4,14 +4,16 @@ import "github.com/project-flogo/core/data/coerce"
 
 // Input input meta data
 type Input struct {
-	Query      string `md:"query"`
-	SchemaFile string `md:"schemaFile"`
+	Query         string `md:"query"`
+	SchemaFile    string `md:"schemaFile"`
+	MaxQueryDepth int    `md:"maxQueryDepth"`
 }
 
 func (i *Input) ToMap() map[string]interface{} {
 	return map[string]interface{}{
-		"query":      i.Query,
-		"schemaFile": i.SchemaFile,
+		"query":         i.Query,
+		"schemaFile":    i.SchemaFile,
+		"maxQueryDepth": i.MaxQueryDepth,
 	}
 }
 
@@ -22,6 +24,10 @@ func (i *Input) FromMap(values map[string]interface{}) error {
 		return err
 	}
 	i.SchemaFile, err = coerce.ToString(values["schemaFile"])
+	if err != nil {
+		return err
+	}
+	i.MaxQueryDepth, err = coerce.ToInt(values["maxQueryDepth"])
 	if err != nil {
 		return err
 	}

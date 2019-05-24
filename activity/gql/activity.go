@@ -108,6 +108,24 @@ func (a *Activity) Eval(ctx activity.Context) (done bool, err error) {
 		return true, nil
 	}
 
+	// check query depth
+	depth := calculateQueryDepth(gqlQuery.Query)
+	if depth > input.MaxQueryDepth {
+		// set error flag & error message in the output
+		err = ctx.SetOutput("error", true)
+		if err != nil {
+			return false, err
+		}
+		errMsg := fmt.Sprintf("graphQL request query depth[%v] is exceeded allowed maxQueryDepth[%v]", depth, input.MaxQueryDepth)
+		fmt.Println(errMsg)
+		err = ctx.SetOutput("errorMessage", errMsg)
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	}
+
 	// validate request
 	validationErrors := schema.Validate(gqlQuery.Query)
 	if validationErrors != nil {
@@ -132,7 +150,7 @@ func (a *Activity) Eval(ctx activity.Context) (done bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	validationMsg := fmt.Sprintf("Valid graphQL query. query = %s\n type = Query", input.Query)
+	validationMsg := fmt.Sprintf("Valid graphQL query. query = %s\n type = Query \n queryDepth = %v", input.Query, depth)
 	err = ctx.SetOutput("validationMessage", validationMsg)
 	if err != nil {
 		return false, err
