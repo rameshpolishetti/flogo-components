@@ -39,7 +39,8 @@
               "service": "GQL",
               "input": {
                 "query": "=$.payload.content",
-                "schemaFile": "schema.graphql"
+                "schemaFile": "schema.graphql",
+                "maxQueryDepth": 2
               }
             },
             {
