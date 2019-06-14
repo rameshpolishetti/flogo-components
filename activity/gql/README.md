@@ -35,7 +35,8 @@ An example `step` that invokes `JQL` service using a `GraphQL request` from a HT
     "service": "GQL",
     "input": {
         "query": "=$.payload.content",
-        "schemaFile": "schema.graphql"
+        "schemaFile": "schema.graphql",
+        "maxQueryDepth": 2
     }
 }
 ```
@@ -54,6 +55,26 @@ Utilizing and extracting the response values can be seen in a conditional evalua
     }
 }
 ```
+## Maximum Query Depth
+This policy allows to prevent clients from abusing deep query depth, Knowing your schema might give you an idea of how deep a legitimate query can go.
+example bad query:
+```sh
+query badquery {            #depth 0
+  author() {                #depth 1
+    posts {                 #depth 2
+      author {              #depth 3
+        posts {             #depth 4
+          author {          #depth 5
+          }
+        }
+      }
+    }
+  }
+}
+```
+gateway configured with `maxQueryDepth` to 3 would consider above query too deep and the query is invalid.
+
+
 ## TODO
 * Policy based on GraphQL query complexity
 * Throttling Based on Server Time
