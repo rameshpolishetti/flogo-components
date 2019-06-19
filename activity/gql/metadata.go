@@ -2,11 +2,19 @@ package gql
 
 import "github.com/project-flogo/core/data/coerce"
 
+// Settings settings for the GraphQL policy service
+type Settings struct {
+	Mode  string `md:"mode,allowed(a,b)"`
+	Limit string `md:"limit"`
+}
+
 // Input input meta data
 type Input struct {
 	Query         string `md:"query"`
 	SchemaFile    string `md:"schemaFile"`
 	MaxQueryDepth int    `md:"maxQueryDepth"`
+	Token         string `md:"token"`
+	Operation     string `md:"operation,allowed(startconsume,stopconsume)"`
 }
 
 func (i *Input) ToMap() map[string]interface{} {
@@ -14,6 +22,8 @@ func (i *Input) ToMap() map[string]interface{} {
 		"query":         i.Query,
 		"schemaFile":    i.SchemaFile,
 		"maxQueryDepth": i.MaxQueryDepth,
+		"token":         i.Token,
+		"operation":     i.Operation,
 	}
 }
 
@@ -28,6 +38,14 @@ func (i *Input) FromMap(values map[string]interface{}) error {
 		return err
 	}
 	i.MaxQueryDepth, err = coerce.ToInt(values["maxQueryDepth"])
+	if err != nil {
+		return err
+	}
+	i.Token, err = coerce.ToString(values["token"])
+	if err != nil {
+		return err
+	}
+	i.Operation, err = coerce.ToString(values["operation"])
 	if err != nil {
 		return err
 	}
