@@ -34,7 +34,7 @@ func New(ctx activity.InitContext) (activity.Activity, error) {
 	}
 
 	if settings.Mode == "a" {
-		return &Activity{}, nil
+		return &Activity{mode: settings.Mode}, nil
 	}
 
 	// mode "b":
