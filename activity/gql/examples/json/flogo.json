@@ -99,7 +99,10 @@
             {
               "name": "GQL",
               "description": "GraphQL policies service",
-              "ref": "github.com/rameshpolishetti/flogo-components/activity/gql"
+              "ref": "github.com/rameshpolishetti/flogo-components/activity/gql",
+              "settings": {
+                "mode": "b"
+              }
             }
           ]
         }
