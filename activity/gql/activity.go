@@ -25,12 +25,19 @@ func init() {
 
 var activityMd = activity.ToMetadata(&Input{}, &Output{})
 
+// New creates new Activity
 func New(ctx activity.InitContext) (activity.Activity, error) {
 	settings := Settings{}
 	err := metadata.MapToStruct(ctx.Settings(), &settings, true)
 	if err != nil {
 		return nil, err
 	}
+
+	if settings.Mode == "a" {
+		return &Activity{}, nil
+	}
+
+	// mode "b":
 	// validate settings
 	_, _, _, err = ratelimiter.ParseLimitString(settings.Limit)
 	if err != nil {
