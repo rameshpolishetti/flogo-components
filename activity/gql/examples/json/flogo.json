@@ -101,7 +101,7 @@
               "description": "GraphQL policies service",
               "ref": "github.com/rameshpolishetti/flogo-components/activity/gql",
               "settings": {
-                "mode": "b"
+                "mode": "a"
               }
             }
           ]
